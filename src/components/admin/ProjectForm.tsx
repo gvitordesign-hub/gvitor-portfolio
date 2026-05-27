@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useProjects } from '../../context/ProjectContext';
-import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { storage, isFirebaseConfigured } from '../../config/firebase';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Plus, Trash2, CheckCircle2, Upload, Loader2 } from 'lucide-react';
 import type { MediaItem } from '../../data/projects';
 
@@ -13,6 +14,7 @@ export const ProjectForm: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
+  const [percentProgress, setPercentProgress] = useState(0);
   
   const [title, setTitle] = useState('');
   const [client, setClient] = useState('');
@@ -62,32 +64,47 @@ export const ProjectForm: React.FC = () => {
     setMediaItems(updated);
   };
 
-  // Função auxiliar de upload de arquivo real para o Supabase Storage
-  const uploadToStorage = async (file: File, folder: string): Promise<string> => {
-    if (!isSupabaseConfigured()) {
-      throw new Error("Supabase não configurado.");
-    }
-    
-    const fileExt = file.name.split('.').pop();
-    const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    const fileName = `${uniqueId}.${fileExt}`;
-    const filePath = `${folder}/${fileName}`;
+  // Função auxiliar com Promises e uploadBytesResumable para progressos (%) precisos
+  const uploadToFirebaseStorage = (file: File, folder: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!isFirebaseConfigured()) {
+        console.warn("Firebase não configurado. Simulando upload.");
+        setTimeout(() => {
+          resolve('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800');
+        }, 1500);
+        return;
+      }
+      
+      const fileExt = file.name.split('.').pop();
+      const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const fileName = `${uniqueId}.${fileExt}`;
+      
+      // Armazena na pasta 'portfolio/' conforme diretriz 3
+      const storageRef = ref(storage!, `portfolio/${folder}/${fileName}`);
+      
+      const uploadTask = uploadBytesResumable(storageRef, file);
 
-        const { error } = await supabase.storage
-      .from('portfolio-media')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
-
-    if (error) throw error;
-
-    // Obter a URL pública do arquivo enviado
-    const { data: { publicUrl } } = supabase.storage
-      .from('portfolio-media')
-      .getPublicUrl(filePath);
-
-    return publicUrl;
+      uploadTask.on('state_changed', 
+        (snapshot) => {
+          // Calcular a porcentagem em tempo real
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setPercentProgress(Math.round(progress));
+        }, 
+        (error) => {
+          console.error("Falha no Firebase Storage:", error);
+          reject(error);
+        }, 
+        async () => {
+          // Upload finalizado, resgata a URL de download pública
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            resolve(downloadURL);
+          } catch (urlErr) {
+            reject(urlErr);
+          }
+        }
+      );
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,24 +116,25 @@ export const ProjectForm: React.FC = () => {
     }
 
     setUploading(true);
-    setUploadStatus('Preparando arquivos...');
+    setPercentProgress(0);
+    setUploadStatus('Preparando upload de mídias...');
 
     try {
-      // 1. Enviar a imagem de capa principal (heroImage)
+      // 1. Upload da imagem de capa (heroImage)
       setUploadStatus('Enviando imagem de capa principal...');
-      const uploadedHeroUrl = await uploadToStorage(heroFile, 'covers');
+      const uploadedHeroUrl = await uploadToFirebaseStorage(heroFile, 'covers');
 
-      // 2. Enviar mídias secundárias da lista
+      // 2. Upload de mídias dinâmicas
       const finalMediaItems: MediaItem[] = [];
 
       for (let i = 0; i < mediaItems.length; i++) {
         const item = mediaItems[i];
-        setUploadStatus(`Processando mídia #${i + 1} de ${mediaItems.length}...`);
+        setPercentProgress(0);
+        setUploadStatus(`Enviando mídia #${i + 1} de ${mediaItems.length}...`);
 
         if (item.type === 'image') {
           if (item.file) {
-            // Fazer upload do arquivo de imagem
-            const url = await uploadToStorage(item.file, 'gallery');
+            const url = await uploadToFirebaseStorage(item.file, 'gallery');
             finalMediaItems.push({
               type: 'image',
               url: url,
@@ -124,7 +142,7 @@ export const ProjectForm: React.FC = () => {
             });
           }
         } else {
-          // É um link de vídeo (YouTube/Vimeo) - salvar a URL digitada
+          // É um link de vídeo externo - YouTube/Vimeo
           if (item.url.trim() !== '') {
             finalMediaItems.push({
               type: 'video',
@@ -136,8 +154,8 @@ export const ProjectForm: React.FC = () => {
         }
       }
 
-      // 3. Persistir o projeto no Supabase
-      setUploadStatus('Salvando case no banco de dados...');
+      // 3. Salvar no Firestore Database
+      setUploadStatus('Publicando case no Firestore...');
       await addProject({
         title,
         client,
@@ -149,7 +167,6 @@ export const ProjectForm: React.FC = () => {
         media: finalMediaItems
       });
 
-      // Feedback de sucesso
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
@@ -164,30 +181,40 @@ export const ProjectForm: React.FC = () => {
       setMediaItems([{ type: 'image', url: '', caption: '', file: null }]);
 
     } catch (err) {
-      console.error("Falha durante o upload ou publicação do projeto:", err);
-      alert("Erro ao enviar arquivos para o Supabase Storage. Verifique se o bucket 'portfolio-media' é público e suas políticas de RLS permitem uploads públicos.");
+      console.error("Falha ao publicar case no Firebase:", err);
+      alert("Erro ao publicar projeto. Certifique-se de ter configurado as regras do Firestore e do Storage para permitir leitura/escrita anônima no modo teste.");
     } finally {
       setUploading(false);
       setUploadStatus('');
+      setPercentProgress(0);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="p-8 rounded-3xl bg-white/[0.01] border border-white/5 shadow-neonGlow/5 flex flex-col gap-6 text-left relative">
       
+      {/* Overlay com barra de progresso real em porcentagem */}
       {uploading && (
-        <div className="absolute inset-0 bg-[#0B0B0B]/90 backdrop-blur-md rounded-3xl z-50 flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <div className="absolute inset-0 bg-[#0B0B0B]/95 backdrop-blur-md rounded-3xl z-50 flex flex-col items-center justify-center gap-4 px-6 text-center">
           <Loader2 className="w-12 h-12 text-electricCyan animate-spin" />
-          <h4 className="font-title text-xl font-bold text-white">Publicando Projeto</h4>
+          <h4 className="font-title text-xl font-bold text-white">Publicando no Firebase</h4>
           <p className="text-sm text-gray-400 max-w-xs">{uploadStatus}</p>
+          
+          <div className="w-full max-w-xs bg-white/5 h-2 rounded-full overflow-hidden mt-2 relative">
+            <div 
+              className="bg-gradient-to-r from-electricCyan to-magneticViolet h-full transition-all duration-300"
+              style={{ width: `${percentProgress}%` }}
+            />
+          </div>
+          <span className="text-xs text-electricCyan font-extrabold tracking-widest">{percentProgress}% CONCLUÍDO</span>
         </div>
       )}
 
-      <h3 className="font-title text-2xl font-bold bg-gradient-to-r from-electricCyan to-magneticViolet bg-clip-text text-transparent mb-2">Cadastrar Novo Case (Supabase Cloud)</h3>
+      <h3 className="font-title text-2xl font-bold bg-gradient-to-r from-electricCyan to-magneticViolet bg-clip-text text-transparent mb-2">Cadastrar Novo Case (Firebase Storage)</h3>
       
       {success && (
         <div className="p-4 rounded-xl bg-neonGreen/10 border border-neonGreen/20 text-neonGreen text-sm flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5" /> Case publicado no Supabase com sucesso!
+          <CheckCircle2 className="w-5 h-5" /> Case publicado no Firebase com sucesso!
         </div>
       )}
 
@@ -385,7 +412,7 @@ export const ProjectForm: React.FC = () => {
         type="submit"
         className="w-full py-4 rounded-xl bg-gradient-to-r from-electricCyan to-magneticViolet text-black font-extrabold hover:shadow-neonGlow transition-all duration-300 mt-2 cursor-pointer"
       >
-        Publicar Case no Supabase
+        Publicar Case no Firebase
       </button>
     </form>
   );

@@ -1,5 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { db, isFirebaseConfigured } from '../config/firebase';
+import { 
+  collection, 
+  addDoc, 
+  deleteDoc, 
+  doc, 
+  updateDoc, 
+  onSnapshot, 
+  query, 
+  orderBy 
+} from 'firebase/firestore';
 import { projectsData as fallbackProjects } from '../data/projects';
 import type { Project } from '../data/projects';
 
@@ -16,83 +26,58 @@ export interface ProjectContextType {
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
-// Mapeadores para tradução DB <-> Frontend
-const mapDBToProject = (dbProj: any): Project => ({
-  id: dbProj.id,
-  title: dbProj.title,
-  client: dbProj.client,
-  year: dbProj.year,
-  category: dbProj.category,
-  challenge: dbProj.challenge,
-  solution: dbProj.solution,
-  heroImage: dbProj.hero_image, // database snake_case -> frontend camelCase
-  media: dbProj.media || []
-});
-
-const mapProjectToDB = (proj: Omit<Project, 'id'>, sortOrder: number) => ({
-  title: proj.title,
-  client: proj.client,
-  year: proj.year,
-  category: proj.category,
-  challenge: proj.challenge,
-  solution: proj.solution,
-  hero_image: proj.heroImage, // frontend camelCase -> database snake_case
-  media: proj.media,
-  sort_order: sortOrder
-});
-
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
-  // Carregar dados de forma resiliente
-  const loadProjects = async () => {
-    setLoading(true);
-    
-    if (!isSupabaseConfigured()) {
-      console.warn("Supabase não está configurado. Usando fallbacks locais.");
+  useEffect(() => {
+    if (!isFirebaseConfigured()) {
+      console.warn("Firebase não está configurado. Usando fallbacks locais.");
       setProjects(fallbackProjects);
       setLoading(false);
       return;
     }
 
-    try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('sort_order', { ascending: true });
+    // Ouvinte em Tempo Real para sincronização instantânea
+    const q = query(collection(db!, 'projects'), orderBy('sort_order', 'asc'));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const list: Project[] = [];
+      snapshot.forEach((docSnapshot) => {
+        list.push({ id: docSnapshot.id, ...docSnapshot.data() } as Project);
+      });
 
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        setProjects(data.map(mapDBToProject));
+      if (list.length === 0) {
+        // Se a coleção estiver vazia, semeia os dados de fallback estáticos automaticamente
+        console.log("Coleção Firestore vazia. Semeando dados estáticos iniciais...");
+        fallbackProjects.forEach(async (proj, idx) => {
+          await addDoc(collection(db!, 'projects'), {
+            title: proj.title,
+            client: proj.client,
+            year: proj.year,
+            category: proj.category,
+            challenge: proj.challenge,
+            solution: proj.solution,
+            heroImage: proj.heroImage,
+            media: proj.media,
+            sort_order: idx
+          });
+        });
       } else {
-        // Se a tabela estiver vazia, inserir os projetos iniciais de fallback
-        console.log("Banco de dados vazio. Semeando dados iniciais...");
-        const seedData = fallbackProjects.map((p, idx) => mapProjectToDB(p, idx));
-        const { data: inserted, error: seedError } = await supabase
-          .from('projects')
-          .insert(seedData)
-          .select();
-
-        if (seedError) throw seedError;
-        if (inserted) {
-          setProjects(inserted.map(mapDBToProject));
-        }
+        setProjects(list);
       }
-    } catch (err) {
-      console.error("Falha ao comunicar com o Supabase. Ativando fallback de segurança:", err);
-      // Fallback resiliente para manter a experiência funcional
-      setProjects(fallbackProjects);
-    } finally {
       setLoading(false);
-    }
-  };
+    }, (error) => {
+      console.error("Falha ao escutar Firestore. Ativando fallbacks locais:", error);
+      setProjects(fallbackProjects);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
-    loadProjects();
-
     const session = localStorage.getItem('gvitor_admin_session');
     if (session === 'true') {
       setIsAdmin(true);
@@ -100,8 +85,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   const addProject = async (newProj: Omit<Project, 'id'>) => {
-    if (!isSupabaseConfigured()) {
-      // Fallback local se desconectado
+    if (!isFirebaseConfigured()) {
+      // Fallback local caso offline
       const localProj: Project = { ...newProj, id: `local-${Date.now()}` };
       setProjects([...projects, localProj]);
       return;
@@ -109,45 +94,34 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     try {
       const nextSortOrder = projects.length;
-      const dbPayload = mapProjectToDB(newProj, nextSortOrder);
-      
-      const { data, error } = await supabase
-        .from('projects')
-        .insert(dbPayload)
-        .select();
-
-      if (error) throw error;
-      if (data) {
-        setProjects([...projects, mapDBToProject(data[0])]);
-      }
+      await addDoc(collection(db!, 'projects'), {
+        ...newProj,
+        sort_order: nextSortOrder
+      });
     } catch (err) {
-      console.error("Erro ao adicionar projeto no Supabase:", err);
-      alert("Não foi possível salvar no banco de dados. Verifique a conexão.");
+      console.error("Erro ao adicionar documento no Firestore:", err);
+      alert("Não foi possível salvar no Firestore. Verifique as regras de segurança RLS.");
     }
   };
 
   const deleteProject = async (id: string) => {
     const updatedLocal = projects.filter(p => p.id !== id);
-    setProjects(updatedLocal);
+    setProjects(updatedLocal); // Atualiza estado local de imediato para melhor UX
 
-    if (!isSupabaseConfigured()) return;
+    if (!isFirebaseConfigured()) return;
 
     try {
-      const { error } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', id);
+      // Excluir o documento correspondente
+      await deleteDoc(doc(db!, 'projects', id));
 
-      if (error) throw error;
-      
-      // Recalcular sort_orders após exclusão para manter sequência limpa
+      // Re-ordenar os demais projetos remanescentes para manter sequência limpa
       await Promise.all(
         updatedLocal.map((proj, idx) => 
-          supabase.from('projects').update({ sort_order: idx }).eq('id', proj.id)
+          updateDoc(doc(db!, 'projects', proj.id), { sort_order: idx })
         )
       );
     } catch (err) {
-      console.error("Erro ao excluir projeto no Supabase:", err);
+      console.error("Erro ao excluir documento do Firestore:", err);
     }
   };
 
@@ -155,19 +129,19 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const reorderedList = Array.from(projects);
     const [removed] = reorderedList.splice(startIndex, 1);
     reorderedList.splice(endIndex, 0, removed);
-    setProjects(reorderedList);
+    setProjects(reorderedList); // Atualiza estado local síncrono para UX suave sem lag
 
-    if (!isSupabaseConfigured()) return;
+    if (!isFirebaseConfigured()) return;
 
     try {
-      // Atualização de sort_order em lote no Supabase
+      // Atualizar sort_order de todos no Firestore em lote
       await Promise.all(
         reorderedList.map((proj, idx) => 
-          supabase.from('projects').update({ sort_order: idx }).eq('id', proj.id)
+          updateDoc(doc(db!, 'projects', proj.id), { sort_order: idx })
         )
       );
     } catch (err) {
-      console.error("Erro ao reordenar projetos no Supabase:", err);
+      console.error("Erro ao sincronizar ordenação no Firestore:", err);
     }
   };
 
