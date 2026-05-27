@@ -1,10 +1,15 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { PortfolioGrid } from '../components/PortfolioGrid';
+import { ProjectProvider } from '../context/ProjectContext';
 
 describe('Componente PortfolioGrid', () => {
   it('deve renderizar todos os projetos inicialmente e aplicar filtros corretamente', () => {
-    render(<PortfolioGrid onProjectSelect={() => {}} />);
+    render(
+      <ProjectProvider>
+        <PortfolioGrid onProjectSelect={() => {}} />
+      </ProjectProvider>
+    );
     
     // Todos os projetos devem estar na tela
     expect(screen.getByText('Cyberpunk E-sports Campaign')).toBeInTheDocument();

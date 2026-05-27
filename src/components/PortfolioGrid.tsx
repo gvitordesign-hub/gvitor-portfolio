@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { projectsData } from '../data/projects';
+import { useProjects } from '../context/ProjectContext';
 import type { Project } from '../data/projects';
 import { Play, Eye } from 'lucide-react';
 
@@ -27,7 +27,7 @@ const cardVariants = {
     y: 0, 
     scale: 1,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 140,
       damping: 18
     }
@@ -40,11 +40,12 @@ const cardVariants = {
 };
 
 export const PortfolioGrid: React.FC<PortfolioGridProps> = ({ onProjectSelect }) => {
+  const { projects } = useProjects();
   const [activeFilter, setActiveFilter] = useState<CategoryFilter>('all');
 
   const filteredProjects = activeFilter === 'all'
-    ? projectsData
-    : projectsData.filter(p => p.category === activeFilter);
+    ? projects
+    : projects.filter(p => p.category === activeFilter);
 
   const filters = [
     { label: 'Todos', id: 'all' as const },

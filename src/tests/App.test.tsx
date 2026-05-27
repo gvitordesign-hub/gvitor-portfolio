@@ -1,10 +1,15 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import App from '../App';
+import { ProjectProvider } from '../context/ProjectContext';
 
 describe('Integração Completa do App', () => {
   it('deve permitir abrir e navegar no modal ao clicar nos itens do portfolio', () => {
-    render(<App />);
+    render(
+      <ProjectProvider>
+        <App />
+      </ProjectProvider>
+    );
     
     // O modal deve estar fechado inicialmente
     expect(screen.queryByText('O DESAFIO (BRIEFING)')).not.toBeInTheDocument();
