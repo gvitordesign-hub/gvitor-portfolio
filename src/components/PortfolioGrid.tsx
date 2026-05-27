@@ -10,6 +10,35 @@ interface PortfolioGridProps {
 
 type CategoryFilter = 'all' | 'social-media' | 'motion-design' | 'visual-identity';
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.96 },
+  show: { 
+    opacity: 1, 
+    y: 0, 
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 140,
+      damping: 18
+    }
+  },
+  exit: { 
+    opacity: 0, 
+    scale: 0.96,
+    transition: { duration: 0.2 }
+  }
+};
+
 export const PortfolioGrid: React.FC<PortfolioGridProps> = ({ onProjectSelect }) => {
   const [activeFilter, setActiveFilter] = useState<CategoryFilter>('all');
 
@@ -30,35 +59,46 @@ export const PortfolioGrid: React.FC<PortfolioGridProps> = ({ onProjectSelect })
         <span className="text-xs uppercase tracking-widest text-electricCyan font-bold">GALERIA PREMIUM</span>
         <h2 className="font-title text-4xl md:text-6xl font-bold mt-2 mb-8">Trabalhos em Destaque</h2>
         
-        {/* Filtros */}
+        {/* Filtros com Pílula Deslizante */}
         <div className="flex flex-wrap items-center justify-center gap-3">
           {filters.map(filter => (
             <button
               key={filter.id}
               onClick={() => setActiveFilter(filter.id)}
-              className={`px-6 py-2.5 rounded-full text-sm font-bold border transition-all duration-300 cursor-pointer ${
-                activeFilter === filter.id
-                  ? 'bg-electricCyan text-black border-electricCyan shadow-neonCyan'
-                  : 'bg-white/[0.02] text-gray-400 border-white/5 hover:border-white/20 hover:text-white'
-              }`}
+              className="relative px-6 py-2.5 rounded-full text-sm font-bold transition-colors duration-300 cursor-pointer text-gray-400 hover:text-white"
             >
-              {filter.label}
+              {activeFilter === filter.id && (
+                <motion.div
+                  layoutId="activeFilterBg"
+                  className="absolute inset-0 bg-electricCyan rounded-full -z-10 shadow-neonCyan"
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                />
+              )}
+              <span className={activeFilter === filter.id ? 'text-black' : ''}>
+                {filter.label}
+              </span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Grid de Projetos */}
-      <motion.div layout className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {/* Grid de Projetos Animado e Otimizado */}
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        layout
+        className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
+      >
         <AnimatePresence mode="popLayout">
           {filteredProjects.map(project => (
             <motion.div
               layout
               key={project.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.4 }}
+              variants={cardVariants}
+              initial="hidden"
+              animate="show"
+              exit="exit"
               onClick={() => onProjectSelect(project)}
               className="group cursor-pointer rounded-2xl overflow-hidden bg-[#121212] border border-white/5 hover:border-electricCyan/40 hover:shadow-neonCyan transition-all duration-300 flex flex-col"
             >

@@ -15,6 +15,6 @@ describe('Integração Completa do App', () => {
     
     // O modal deve abrir com as informações corretas
     expect(screen.getByText('O DESAFIO (BRIEFING)')).toBeInTheDocument();
-    expect(screen.getByText('Cyberpunk E-sports Campaign')).toBeInTheDocument();
+    expect(screen.getAllByText('Cyberpunk E-sports Campaign').length).toBe(2);
   });
 });
