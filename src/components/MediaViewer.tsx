@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Play } from 'lucide-react';
+import { getOptimizedImageUrl } from '../utils/imageOptimizer';
 
 interface MediaViewerProps {
   media: {
@@ -21,7 +22,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({ media }) => {
             <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={() => setIsVideoLoaded(true)}>
               {media.thumbnail && (
                 <img
-                  src={media.thumbnail}
+                  src={getOptimizedImageUrl(media.thumbnail, 800)}
                   alt={media.caption || 'Thumbnail do Vídeo'}
                   loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500 filter brightness-75"
@@ -52,7 +53,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({ media }) => {
     <div className="w-full flex flex-col gap-2">
       <div className="w-full rounded-2xl overflow-hidden border border-white/5 bg-[#121212]">
         <img
-          src={media.url}
+          src={getOptimizedImageUrl(media.url, 1000)}
           alt={media.caption || 'Visual do Portfólio'}
           loading="lazy"
           className="w-full h-auto object-cover max-h-[500px]"

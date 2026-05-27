@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useProjects } from '../context/ProjectContext';
 import type { Project } from '../data/projects';
 import { Play, Eye } from 'lucide-react';
+import { getOptimizedImageUrl } from '../utils/imageOptimizer';
 
 interface PortfolioGridProps {
   onProjectSelect: (project: Project) => void;
@@ -106,7 +107,7 @@ export const PortfolioGrid: React.FC<PortfolioGridProps> = ({ onProjectSelect })
               {/* Media Container com Hover Glow */}
               <div className="relative overflow-hidden aspect-[4/3] w-full bg-black/40">
                 <img
-                  src={project.heroImage}
+                  src={getOptimizedImageUrl(project.heroImage, 600)}
                   alt={project.title}
                   loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-105 filter grayscale group-hover:grayscale-0 transition-all duration-500"

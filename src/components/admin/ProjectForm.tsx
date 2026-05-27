@@ -1,29 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useProjects } from '../../context/ProjectContext';
-import { Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { Plus, Trash2, CheckCircle2, Upload, Loader2 } from 'lucide-react';
 import type { MediaItem } from '../../data/projects';
+
+interface ExtendedMediaItem extends MediaItem {
+  file?: File | null;
+}
 
 export const ProjectForm: React.FC = () => {
   const { addProject } = useProjects();
   const [success, setSuccess] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
+  
   const [title, setTitle] = useState('');
   const [client, setClient] = useState('');
   const [year, setYear] = useState('');
   const [category, setCategory] = useState<'social-media' | 'motion-design' | 'visual-identity'>('social-media');
   const [challenge, setChallenge] = useState('');
   const [solution, setSolution] = useState('');
-  const [heroImage, setHeroImage] = useState('');
-  const [mediaItems, setMediaItems] = useState<MediaItem[]>([{ type: 'image', url: '', caption: '' }]);
+  
+  // Imagem de capa (File Input)
+  const [heroFile, setHeroFile] = useState<File | null>(null);
+  const heroInputRef = useRef<HTMLInputElement>(null);
+
+  // Mídias adicionais dinâmicas
+  const [mediaItems, setMediaItems] = useState<ExtendedMediaItem[]>([
+    { type: 'image', url: '', caption: '', file: null }
+  ]);
 
   const handleAddMediaRow = () => {
-    setMediaItems([...mediaItems, { type: 'image', url: '', caption: '' }]);
+    setMediaItems([...mediaItems, { type: 'image', url: '', caption: '', file: null }]);
   };
 
   const handleRemoveMediaRow = (index: number) => {
     setMediaItems(mediaItems.filter((_, i) => i !== index));
   };
 
-  const handleMediaChange = (index: number, field: keyof MediaItem, value: string) => {
+  const handleMediaChange = (index: number, field: keyof ExtendedMediaItem, value: any) => {
     const updated = mediaItems.map((item, i) => {
       if (i === index) {
         return { ...item, [field]: value };
@@ -33,44 +48,146 @@ export const ProjectForm: React.FC = () => {
     setMediaItems(updated);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleMediaFileChange = (index: number, file: File | null) => {
+    const updated = mediaItems.map((item, i) => {
+      if (i === index) {
+        return { 
+          ...item, 
+          file: file,
+          url: file ? URL.createObjectURL(file) : '' // Preview local temporário
+        };
+      }
+      return item;
+    });
+    setMediaItems(updated);
+  };
+
+  // Função auxiliar de upload de arquivo real para o Supabase Storage
+  const uploadToStorage = async (file: File, folder: string): Promise<string> => {
+    if (!isSupabaseConfigured()) {
+      throw new Error("Supabase não configurado.");
+    }
+    
+    const fileExt = file.name.split('.').pop();
+    const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const fileName = `${uniqueId}.${fileExt}`;
+    const filePath = `${folder}/${fileName}`;
+
+        const { error } = await supabase.storage
+      .from('portfolio-media')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) throw error;
+
+    // Obter a URL pública do arquivo enviado
+    const { data: { publicUrl } } = supabase.storage
+      .from('portfolio-media')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Filtrar mídias vazias
-    const validMedia = mediaItems.filter(item => item.url.trim() !== '');
+    if (!heroFile) {
+      alert("Por favor, selecione uma imagem de capa para o projeto.");
+      return;
+    }
 
-    addProject({
-      title,
-      client,
-      year,
-      category,
-      challenge,
-      solution,
-      heroImage: heroImage || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
-      media: validMedia
-    });
+    setUploading(true);
+    setUploadStatus('Preparando arquivos...');
 
-    // Feedback de sucesso
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
+    try {
+      // 1. Enviar a imagem de capa principal (heroImage)
+      setUploadStatus('Enviando imagem de capa principal...');
+      const uploadedHeroUrl = await uploadToStorage(heroFile, 'covers');
 
-    // Resetar formulário
-    setTitle('');
-    setClient('');
-    setYear('');
-    setChallenge('');
-    setSolution('');
-    setHeroImage('');
-    setMediaItems([{ type: 'image', url: '', caption: '' }]);
+      // 2. Enviar mídias secundárias da lista
+      const finalMediaItems: MediaItem[] = [];
+
+      for (let i = 0; i < mediaItems.length; i++) {
+        const item = mediaItems[i];
+        setUploadStatus(`Processando mídia #${i + 1} de ${mediaItems.length}...`);
+
+        if (item.type === 'image') {
+          if (item.file) {
+            // Fazer upload do arquivo de imagem
+            const url = await uploadToStorage(item.file, 'gallery');
+            finalMediaItems.push({
+              type: 'image',
+              url: url,
+              caption: item.caption || ''
+            });
+          }
+        } else {
+          // É um link de vídeo (YouTube/Vimeo) - salvar a URL digitada
+          if (item.url.trim() !== '') {
+            finalMediaItems.push({
+              type: 'video',
+              url: item.url.trim(),
+              caption: item.caption || '',
+              thumbnail: item.thumbnail || ''
+            });
+          }
+        }
+      }
+
+      // 3. Persistir o projeto no Supabase
+      setUploadStatus('Salvando case no banco de dados...');
+      await addProject({
+        title,
+        client,
+        year,
+        category,
+        challenge,
+        solution,
+        heroImage: uploadedHeroUrl,
+        media: finalMediaItems
+      });
+
+      // Feedback de sucesso
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+
+      // Resetar formulário
+      setTitle('');
+      setClient('');
+      setYear('');
+      setChallenge('');
+      setSolution('');
+      setHeroFile(null);
+      if (heroInputRef.current) heroInputRef.current.value = '';
+      setMediaItems([{ type: 'image', url: '', caption: '', file: null }]);
+
+    } catch (err) {
+      console.error("Falha durante o upload ou publicação do projeto:", err);
+      alert("Erro ao enviar arquivos para o Supabase Storage. Verifique se o bucket 'portfolio-media' é público e suas políticas de RLS permitem uploads públicos.");
+    } finally {
+      setUploading(false);
+      setUploadStatus('');
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-8 rounded-3xl bg-white/[0.01] border border-white/5 shadow-neonGlow/5 flex flex-col gap-6 text-left">
-      <h3 className="font-title text-2xl font-bold bg-gradient-to-r from-electricCyan to-magneticViolet bg-clip-text text-transparent mb-2">Cadastrar Novo Case</h3>
+    <form onSubmit={handleSubmit} className="p-8 rounded-3xl bg-white/[0.01] border border-white/5 shadow-neonGlow/5 flex flex-col gap-6 text-left relative">
+      
+      {uploading && (
+        <div className="absolute inset-0 bg-[#0B0B0B]/90 backdrop-blur-md rounded-3xl z-50 flex flex-col items-center justify-center gap-4 px-6 text-center">
+          <Loader2 className="w-12 h-12 text-electricCyan animate-spin" />
+          <h4 className="font-title text-xl font-bold text-white">Publicando Projeto</h4>
+          <p className="text-sm text-gray-400 max-w-xs">{uploadStatus}</p>
+        </div>
+      )}
+
+      <h3 className="font-title text-2xl font-bold bg-gradient-to-r from-electricCyan to-magneticViolet bg-clip-text text-transparent mb-2">Cadastrar Novo Case (Supabase Cloud)</h3>
       
       {success && (
         <div className="p-4 rounded-xl bg-neonGreen/10 border border-neonGreen/20 text-neonGreen text-sm flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5" /> Case cadastrado com sucesso!
+          <CheckCircle2 className="w-5 h-5" /> Case publicado no Supabase com sucesso!
         </div>
       )}
 
@@ -125,16 +242,24 @@ export const ProjectForm: React.FC = () => {
         </div>
       </div>
 
-      <div>
-        <label className="text-xs uppercase font-extrabold text-gray-400 block mb-1">Capa Principal (URL da Imagem HD)</label>
-        <input
-          type="url"
-          required
-          value={heroImage}
-          onChange={e => setHeroImage(e.target.value)}
-          placeholder="Ex: https://images.unsplash.com/photo-..."
-          className="w-full bg-[#161616] border border-white/5 focus:border-electricCyan rounded-xl px-4 py-2.5 text-white outline-none text-sm transition-all duration-300"
-        />
+      {/* Capa do Projeto (File Upload) */}
+      <div className="p-5 rounded-2xl border border-dashed border-white/10 bg-white/[0.005] hover:border-electricCyan/40 transition-colors duration-300">
+        <label className="text-xs uppercase font-extrabold text-gray-300 block mb-3">Imagem de Capa (Upload do Arquivo HD)</label>
+        <div className="flex items-center gap-4">
+          <label className="px-5 py-3 rounded-xl border border-white/5 hover:border-electricCyan text-white bg-white/5 hover:bg-electricCyan/10 text-xs font-bold transition-all cursor-pointer flex items-center gap-2">
+            <Upload className="w-4 h-4" /> Selecionar Imagem
+            <input
+              type="file"
+              ref={heroInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={e => setHeroFile(e.target.files?.[0] || null)}
+            />
+          </label>
+          <span className="text-xs text-gray-500 truncate max-w-xs">
+            {heroFile ? heroFile.name : 'Nenhum arquivo selecionado'}
+          </span>
+        </div>
       </div>
 
       <div>
@@ -202,14 +327,31 @@ export const ProjectForm: React.FC = () => {
                 </select>
               </div>
               <div className="md:col-span-2">
-                <input
-                  type="url"
-                  required
-                  value={item.url}
-                  onChange={e => handleMediaChange(index, 'url', e.target.value)}
-                  placeholder={item.type === 'video' ? 'URL do Vídeo (Vimeo/YouTube)' : 'URL da Imagem HD'}
-                  className="w-full bg-[#161616] border border-white/5 focus:border-electricCyan rounded-lg px-3 py-2 text-white outline-none text-xs"
-                />
+                {item.type === 'image' ? (
+                  <div className="flex items-center gap-2">
+                    <label className="px-3 py-2 rounded-lg border border-white/5 bg-white/5 hover:bg-electricCyan/10 text-white text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1.5 whitespace-nowrap">
+                      <Upload className="w-3.5 h-3.5" /> Upload Imagem
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => handleMediaFileChange(index, e.target.files?.[0] || null)}
+                      />
+                    </label>
+                    <span className="text-[11px] text-gray-500 truncate max-w-[150px]">
+                      {item.file ? item.file.name : 'Nenhum arquivo'}
+                    </span>
+                  </div>
+                ) : (
+                  <input
+                    type="url"
+                    required
+                    value={item.file ? '' : item.url}
+                    onChange={e => handleMediaChange(index, 'url', e.target.value)}
+                    placeholder="URL do Vídeo (YouTube/Vimeo)"
+                    className="w-full bg-[#161616] border border-white/5 focus:border-electricCyan rounded-lg px-3 py-2 text-white outline-none text-xs"
+                  />
+                )}
               </div>
             </div>
 
@@ -243,7 +385,7 @@ export const ProjectForm: React.FC = () => {
         type="submit"
         className="w-full py-4 rounded-xl bg-gradient-to-r from-electricCyan to-magneticViolet text-black font-extrabold hover:shadow-neonGlow transition-all duration-300 mt-2 cursor-pointer"
       >
-        Publicar Case no Portfólio
+        Publicar Case no Supabase
       </button>
     </form>
   );
