@@ -9,7 +9,7 @@ interface PortfolioGridProps {
   onProjectSelect: (project: Project) => void;
 }
 
-type CategoryFilter = 'all' | 'social-media' | 'motion-design' | 'visual-identity';
+type CategoryFilter = 'all' | 'event-campaigns' | 'music-releases' | 'motion-visuals';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -50,9 +50,9 @@ export const PortfolioGrid: React.FC<PortfolioGridProps> = ({ onProjectSelect })
 
   const filters = [
     { label: 'Todos', id: 'all' as const },
-    { label: 'Social Media', id: 'social-media' as const },
-    { label: 'Motion Design', id: 'motion-design' as const },
-    { label: 'Identidade Visual', id: 'visual-identity' as const }
+    { label: 'Campanhas de Eventos', id: 'event-campaigns' as const },
+    { label: 'Lançamentos Musicais', id: 'music-releases' as const },
+    { label: 'Motion & Visuals', id: 'motion-visuals' as const }
   ];
 
   return (
@@ -117,7 +117,7 @@ export const PortfolioGrid: React.FC<PortfolioGridProps> = ({ onProjectSelect })
                 {/* Overlay interativo com ícone */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <div className="w-14 h-14 bg-electricCyan text-black rounded-full flex items-center justify-center shadow-neonCyan hover:scale-110 transition-transform duration-300">
-                    {project.category === 'motion-design' ? (
+                    {project.category === 'motion-visuals' || project.category === 'music-releases' ? (
                       <Play className="w-6 h-6 fill-black translate-x-0.5" />
                     ) : (
                       <Eye className="w-6 h-6" />

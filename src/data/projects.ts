@@ -8,7 +8,7 @@ export interface MediaItem {
 export interface Project {
   id: string;
   title: string;
-  category: 'social-media' | 'motion-design' | 'visual-identity';
+  category: 'event-campaigns' | 'music-releases' | 'motion-visuals';
   client: string;
   year: string;
   challenge: string;
@@ -19,45 +19,45 @@ export interface Project {
 
 export const projectsData: Project[] = [
   {
-    id: 'cyberpunk-ad',
-    title: 'Cyberpunk E-sports Campaign',
-    category: 'social-media',
-    client: 'Apex Arena',
+    id: 'hyper-nexus-festival',
+    title: 'Hyper Nexus Festival 2026',
+    category: 'event-campaigns',
+    client: 'Nexus Entertainment',
     year: '2026',
-    challenge: 'Desenvolver artes estáticas e banners com estética cyberpunk disruptiva que gerassem alto engajamento orgânico na semana do torneio de e-sports.',
-    solution: 'Criação de composições ricas em contraste cromático usando tons neon azul e rosa, elementos 3D flutuantes e tipografia distorcida.',
-    heroImage: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800',
+    challenge: 'Desenvolver a identidade de campanha digital e motion de line-ups oficiais para um festival de música eletrônica futurista, com o desafio de esgotar 40 mil ingressos na pré-venda global.',
+    solution: 'Direção de arte com tipografia cromada (liquid metal), renderização 3D de esferas e layouts pulsantes gerando contraste magnético no tempo exato das batidas de música.',
+    heroImage: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=800',
     media: [
-      { type: 'image', url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=1200', caption: 'Banner Principal para Instagram Stories' },
-      { type: 'image', url: 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&q=80&w=1200', caption: 'Post Quadrado Carrossel - Detalhes 3D' }
+      { type: 'image', url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=1200', caption: 'Poster Line-up Oficial em Liquid Chrome' },
+      { type: 'image', url: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&q=80&w=1200', caption: 'Banners Digitais para Anuncio de Headliners' }
     ]
   },
   {
-    id: 'neon-waves-motion',
-    title: 'Neon Waves Music Video Motion',
-    category: 'motion-design',
-    client: 'SubFreq Records',
+    id: 'subfreq-vortex-canvas',
+    title: 'Vortex Spotify Canvas & Campaign',
+    category: 'music-releases',
+    client: 'DJ Kaelen / SubFreq Records',
     year: '2026',
-    challenge: 'Criar uma introdução visual animada em motion design integrada com elementos de áudio reativos para lançamentos de música eletrônica.',
-    solution: 'Loops de ondas senoidais 3D estilizados com glow neon e transições dinâmicas baseadas nos picos de frequência sonora (batida).',
-    heroImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800',
+    challenge: 'Criar loops dinâmicos reativos de alta retenção para o Spotify Canvas e teasers de anúncio para o single eletrônico "VORTEX", visando a viralização orgânica nas plataformas.',
+    solution: 'Loops de motion em túneis 3D de luzes estroboscópicas sincronizadas com o BPM do single, gerando retenção instantânea em telas verticais (TikTok/Spotify).',
+    heroImage: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&q=80&w=800',
     media: [
-      { type: 'video', url: 'https://player.vimeo.com/video/324484361', thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1200', caption: 'Loop Motion Principal 1080p' },
-      { type: 'image', url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=1200', caption: 'Frames Principais - Render Estático' }
+      { type: 'video', url: 'https://player.vimeo.com/video/324484361', thumbnail: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&q=80&w=1200', caption: 'Spotify Canvas Loop Motion Edit' },
+      { type: 'image', url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=1200', caption: 'Keyframes Renders - Estética Synthwave' }
     ]
   },
   {
-    id: 'brand-overdrive',
-    title: 'Identidade Overdrive Tech',
-    category: 'visual-identity',
-    client: 'Overdrive Inc.',
-    year: '2025',
-    challenge: 'Rebrand completo de uma startup de inteligência artificial que demandava uma identidade visual limpa, mas incrivelmente futurista e imponente.',
-    solution: 'Logo minimalista baseado no conceito de aceleração vetorial, com papelaria corporativa premium impressa com verniz localizado holográfico.',
-    heroImage: 'https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?auto=format&fit=crop&q=80&w=800',
+    id: 'ethereal-tour-trailer',
+    title: 'Ethereal World Tour Trailer 3D',
+    category: 'motion-visuals',
+    client: 'AURA Sound / Live Nation',
+    year: '2026',
+    challenge: 'Direção de arte tridimensional e teaser promocional cinemático para anúncio global de turnê de estádios, gerando desejo imediato na base de fãs.',
+    solution: 'Desenvolvimento de renders 3D orgânicos representando a atmosfera mística do show, com transições rítmicas brutas e efeitos holográficos neon de alto padrão.',
+    heroImage: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&q=80&w=800',
     media: [
-      { type: 'image', url: 'https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?auto=format&fit=crop&q=80&w=1200', caption: 'Paleta Cromática e Guia de Marca' },
-      { type: 'image', url: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&q=80&w=1200', caption: 'Mockup papelaria corporativa' }
+      { type: 'image', url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&q=80&w=1200', caption: 'Render Tridimensional da Esfera Ethereal' },
+      { type: 'image', url: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&q=80&w=1200', caption: 'Visual de Palco LED e Efeitos de Lasers' }
     ]
   }
 ];

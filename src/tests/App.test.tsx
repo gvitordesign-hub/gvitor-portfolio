@@ -15,11 +15,11 @@ describe('Integração Completa do App', () => {
     expect(screen.queryByText('O DESAFIO (BRIEFING)')).not.toBeInTheDocument();
     
     // Clicar no projeto para abrir o modal
-    const projectCard = screen.getByText('Cyberpunk E-sports Campaign');
+    const projectCard = screen.getByText('Hyper Nexus Festival 2026');
     fireEvent.click(projectCard);
     
     // O modal deve abrir com as informações corretas
     expect(screen.getByText('O DESAFIO (BRIEFING)')).toBeInTheDocument();
-    expect(screen.getAllByText('Cyberpunk E-sports Campaign').length).toBe(2);
+    expect(screen.getAllByText('Hyper Nexus Festival 2026').length).toBe(2);
   });
 });

@@ -11,7 +11,7 @@ vi.mock('./MediaViewer', () => ({
 const mockProject: Project = {
   id: 'cyberpunk-ad',
   title: 'Cyberpunk E-sports Campaign',
-  category: 'social-media',
+  category: 'event-campaigns',
   client: 'Apex Arena',
   year: '2026',
   challenge: 'Briefing desafio',

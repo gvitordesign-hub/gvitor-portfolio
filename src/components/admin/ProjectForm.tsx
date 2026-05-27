@@ -19,7 +19,7 @@ export const ProjectForm: React.FC = () => {
   const [title, setTitle] = useState('');
   const [client, setClient] = useState('');
   const [year, setYear] = useState('');
-  const [category, setCategory] = useState<'social-media' | 'motion-design' | 'visual-identity'>('social-media');
+  const [category, setCategory] = useState<'event-campaigns' | 'music-releases' | 'motion-visuals'>('event-campaigns');
   const [challenge, setChallenge] = useState('');
   const [solution, setSolution] = useState('');
   
@@ -262,9 +262,9 @@ export const ProjectForm: React.FC = () => {
             onChange={e => setCategory(e.target.value as any)}
             className="w-full bg-[#161616] border border-white/5 focus:border-electricCyan rounded-xl px-4 py-2.5 text-white outline-none text-sm transition-all duration-300"
           >
-            <option value="social-media">Social Media Estático</option>
-            <option value="motion-design">Motion Design</option>
-            <option value="visual-identity">Identidade Visual</option>
+            <option value="event-campaigns">Campanhas de Eventos</option>
+            <option value="music-releases">Lançamentos Musicais</option>
+            <option value="motion-visuals">Motion & Visuals</option>
           </select>
         </div>
       </div>

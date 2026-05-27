@@ -12,15 +12,15 @@ describe('Componente PortfolioGrid', () => {
     );
     
     // Todos os projetos devem estar na tela
-    expect(screen.getByText('Cyberpunk E-sports Campaign')).toBeInTheDocument();
-    expect(screen.getByText('Neon Waves Music Video Motion')).toBeInTheDocument();
+    expect(screen.getByText('Hyper Nexus Festival 2026')).toBeInTheDocument();
+    expect(screen.getByText('Vortex Spotify Canvas & Campaign')).toBeInTheDocument();
     
-    // Clicar no filtro de Social Media
-    const filterBtn = screen.getByRole('button', { name: /social media/i });
+    // Clicar no filtro de Campanhas de Eventos
+    const filterBtn = screen.getByRole('button', { name: /campanhas de eventos/i });
     fireEvent.click(filterBtn);
     
-    // Deve exibir o de Social Media mas esconder o de Motion Design
-    expect(screen.getByText('Cyberpunk E-sports Campaign')).toBeInTheDocument();
-    expect(screen.queryByText('Neon Waves Music Video Motion')).not.toBeInTheDocument();
+    // Deve exibir o de Campanhas de Eventos mas esconder o de Lançamentos Musicais
+    expect(screen.getByText('Hyper Nexus Festival 2026')).toBeInTheDocument();
+    expect(screen.queryByText('Vortex Spotify Canvas & Campaign')).not.toBeInTheDocument();
   });
 });
