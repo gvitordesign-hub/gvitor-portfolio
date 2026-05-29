@@ -9,7 +9,7 @@ export const Contact: React.FC = () => {
     // Monta a mensagem personalizada para enviar para o WhatsApp
     const text = `Olá GVITOR! Meu nome é ${formData.name}. Gostaria de falar sobre um projeto.\nE-mail: ${formData.email}\n\nMensagem:\n${formData.message}`;
     const encodedText = encodeURIComponent(text);
-    window.open(`https://wa.me/5511999999999?text=${encodedText}`, '_blank');
+    window.open(`https://wa.me/5577999225120?text=${encodedText}`, '_blank');
   };
 
   return (
@@ -22,8 +22,8 @@ export const Contact: React.FC = () => {
             Seja para turbinar sua marca com motion design de ponta ou dominar o feed com artes imponentes, estou à disposição para elevar o nível da sua marca. Preencha ou chame direto no Zap!
           </p>
           <div className="flex flex-col gap-4 pt-4">
-            <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-300 hover:text-electricCyan duration-300">
-              <Phone className="w-5 h-5 text-electricCyan" /> +55 11 99999-9999
+            <a href="https://wa.me/5577999225120" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-300 hover:text-electricCyan duration-300">
+              <Phone className="w-5 h-5 text-electricCyan" /> +55 (77) 99922-5120
             </a>
             <a href="https://instagram.com/gvitordesign" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-300 hover:text-electricCyan duration-300">
               <MessageSquare className="w-5 h-5 text-magneticViolet" /> @gvitordesign
