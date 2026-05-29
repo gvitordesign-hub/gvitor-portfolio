@@ -104,15 +104,26 @@ export const PortfolioGrid: React.FC<PortfolioGridProps> = ({ onProjectSelect })
               onClick={() => onProjectSelect(project)}
               className="group cursor-pointer rounded-2xl overflow-hidden bg-[#121212] border border-white/5 hover:border-electricCyan/40 hover:shadow-neonCyan transition-all duration-300 flex flex-col"
             >
-              {/* Media Container com Hover Glow */}
-              <div className="relative overflow-hidden aspect-[4/3] w-full bg-black/40">
-                <img
-                  src={getOptimizedImageUrl(project.heroImage, 600)}
-                  alt={project.title}
-                  loading="lazy"
-                  className="w-full h-full object-cover group-hover:scale-105 filter grayscale group-hover:grayscale-0 transition-all duration-500"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-100 group-hover:opacity-60 transition-opacity duration-300" />
+              {/* Media Container com Hover Glow e Proporção Original Adaptativa */}
+              <div className="relative overflow-hidden h-[300px] w-full bg-black/60 flex items-center justify-center border-b border-white/5">
+                {project.heroImage.endsWith('.mp4') ? (
+                  <video
+                    src={project.heroImage}
+                    muted
+                    loop
+                    playsInline
+                    autoPlay
+                    className="w-auto h-auto max-w-full max-h-full object-contain group-hover:scale-102 transition-all duration-500"
+                  />
+                ) : (
+                  <img
+                    src={getOptimizedImageUrl(project.heroImage, 600)}
+                    alt={project.title}
+                    loading="lazy"
+                    className="w-auto h-auto max-w-full max-h-full object-contain group-hover:scale-102 filter grayscale group-hover:grayscale-0 transition-all duration-500"
+                  />
+                )}
+                <div className="absolute inset-0 bg-black/20 opacity-100 group-hover:opacity-40 transition-opacity duration-300 pointer-events-none" />
                 
                 {/* Overlay interativo com ícone */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
