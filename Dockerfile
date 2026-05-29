@@ -6,8 +6,8 @@ WORKDIR /app
 # Copiar arquivos de dependências primeiro para aproveitar o cache de camadas do Docker
 COPY package*.json ./
 
-# Instalar dependências limpas de produção e desenvolvimento (necessário para a build do Vite)
-RUN npm ci
+# Instalar dependências de compilação
+RUN npm install
 
 # Copiar o resto do código do projeto
 COPY . .
