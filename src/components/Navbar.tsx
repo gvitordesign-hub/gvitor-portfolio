@@ -4,7 +4,7 @@ import logoImg from '../assets/logo.png';
 export const Navbar: React.FC = () => {
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-[#0B0B0B]/80 backdrop-blur-md border-b border-white/5 px-6 py-4 transition-all duration-300">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <div className="max-w-7xl mx-auto flex items-center justify-center md:justify-between">
         <a href="#" className="flex items-center gap-2 group">
           <img src={logoImg} alt="GVITOR DESIGN" className="h-8 md:h-10 w-auto group-hover:scale-105 transition-transform duration-300" />
         </a>
