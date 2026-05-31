@@ -72,7 +72,7 @@ export const About: React.FC = () => {
             </h2>
             
             <p className="text-gray-200 text-lg leading-relaxed font-normal">
-              Me chamo <strong>Gonçalo Vitor</strong>, tenho 31 anos, sou natural de <strong>Livramento de Nossa Senhora, Bahia</strong>, e atuo como designer gráfico no mercado de artistas e eventos há mais de uma década.
+              Muito prazer, sou o <strong>Gonçalo Vitor</strong>! Nascido sob o sol e a energia de <strong>Livramento de Nossa Senhora, Bahia</strong>, hoje com 31 anos de vida e mais de uma década de pura estrada como designer gráfico e diretor de arte no showbusiness. Traduzo a vibração da música e a potência dos palcos em pixels de alta voltagem, transformando campanhas de artistas e grandes eventos em verdadeiras experiências visuais impossíveis de ignorar.
             </p>
             
             <p className="text-gray-400 text-base leading-relaxed">

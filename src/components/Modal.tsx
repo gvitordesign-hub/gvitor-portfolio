@@ -41,32 +41,36 @@ export const Modal: React.FC<ModalProps> = ({ project, onClose, onNext, onPrev }
         className="fixed inset-0 bg-black/90 backdrop-blur-lg"
       />
 
+      {/* Botão Fechar Modal Flutuante - Fixo na tela no Mobile para acessibilidade */}
+      <motion.button
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.8 }}
+        transition={{ delay: 0.1 }}
+        onClick={onClose}
+        aria-label="Fechar modal"
+        className="fixed top-6 right-6 z-[60] w-12 h-12 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-electricCyan hover:text-black border border-white/10 hover:border-electricCyan hover:shadow-neonCyan transition-all duration-300 cursor-pointer active:scale-95 shadow-lg"
+      >
+        <X className="w-6 h-6" />
+      </motion.button>
+
       {/* Conteúdo do Modal */}
       <motion.div
         initial={{ opacity: 0, y: 50, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 50, scale: 0.95 }}
         transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-        className="relative bg-[#121212] border border-white/10 w-full max-w-6xl rounded-3xl overflow-hidden shadow-neonGlow z-10 flex flex-col md:flex-row max-h-[85vh] md:max-h-[90vh]"
+        className="relative bg-[#121212] border border-white/10 w-full max-w-6xl rounded-3xl overflow-y-auto md:overflow-hidden shadow-neonGlow z-10 flex flex-col md:flex-row max-h-[85vh] md:max-h-[90vh]"
       >
-        {/* Botão Fechar Modal Flutuante */}
-        <button
-          onClick={onClose}
-          aria-label="Fechar modal"
-          className="absolute top-5 right-5 z-20 w-11 h-11 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-electricCyan hover:text-black border border-white/10 hover:border-electricCyan hover:shadow-neonCyan transition-all duration-300 cursor-pointer"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
         {/* Lado Esquerdo: Portfólio de Mídia */}
-        <div className="w-full md:w-3/5 bg-black/40 overflow-y-auto p-6 md:p-8 flex flex-col gap-6 scrollbar-thin">
+        <div className="w-full md:w-3/5 bg-black/40 md:overflow-y-auto p-6 md:p-8 flex flex-col gap-6 scrollbar-thin">
           {project.media.map((item, index) => (
             <MediaViewer key={index} media={item} />
           ))}
         </div>
 
         {/* Lado Direito: Metadados do Briefing */}
-        <div className="w-full md:w-2/5 p-6 md:p-10 border-t md:border-t-0 md:border-l border-white/5 flex flex-col justify-between overflow-y-auto bg-darkCard/50">
+        <div className="w-full md:w-2/5 p-6 md:p-10 border-t md:border-t-0 md:border-l border-white/5 flex flex-col justify-between md:overflow-y-auto bg-darkCard/50">
           <div className="space-y-6">
             <div>
               <span className="text-xs font-extrabold uppercase text-electricCyan tracking-wider flex items-center gap-1.5">

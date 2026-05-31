@@ -29,7 +29,7 @@ export const Hero: React.FC = () => {
   ];
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center pt-28 pb-32 px-6 overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(171,32,255,0.08)_0%,rgba(0,0,0,0)_70%)]">
+    <section className="relative min-h-screen flex items-center justify-center pt-20 pb-24 px-4 md:pt-28 md:pb-32 md:px-6 overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(171,32,255,0.08)_0%,rgba(0,0,0,0)_70%)]">
       {/* Luzes Neon Abstratas de Fundo */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-electricCyan/5 rounded-full blur-[120px] pointer-events-none animate-pulse" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-magneticViolet/5 rounded-full blur-[120px] pointer-events-none animate-pulse duration-500" />
@@ -117,20 +117,16 @@ export const Hero: React.FC = () => {
           initial={{ opacity: 0, y: 35 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.15 }}
-          className="font-title text-3xl sm:text-4xl md:text-5xl lg:text-[54px] font-extrabold tracking-tight leading-tight mb-6"
+          className="font-title text-3xl sm:text-5xl md:text-6xl lg:text-[68px] font-extrabold tracking-tight leading-tight mb-6"
         >
-          Visuais que transformam <span className="bg-gradient-to-r from-electricCyan to-magneticViolet bg-clip-text text-transparent">telas em arenas</span>,<br />
-          Design que converte cliques em <span className="relative inline-block text-white">
-            sold out
-            <span className="absolute bottom-1 left-0 w-full h-1.5 bg-magneticViolet/40 -z-10" />
-          </span>.
+          Design de elite para <span className="bg-gradient-to-r from-electricCyan to-magneticViolet bg-clip-text text-transparent">artistas e eventos</span>.
         </motion.h1>
         
         <motion.p
           initial={{ opacity: 0, y: 35 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-gray-400 text-sm sm:text-base md:text-lg max-w-3xl mx-auto mb-8 font-normal leading-relaxed px-4 sm:px-0"
+          className="text-gray-400 text-xs sm:text-base md:text-lg max-w-3xl mx-auto mb-6 md:mb-8 font-normal leading-relaxed px-4 sm:px-0"
         >
           Direção de arte e motion design sob medida para a elite do showbusiness e da música. Traduzo a energia do seu som em identidades estéticas imponentes, campanhas promocionais magnéticas e experiências de palco feitas para reter a atenção absoluta e dominar os charts.
         </motion.p>

@@ -67,7 +67,7 @@ export const PortfolioGrid: React.FC<PortfolioGridProps> = ({ onProjectSelect })
             <button
               key={filter.id}
               onClick={() => setActiveFilter(filter.id)}
-              className="relative px-6 py-2.5 rounded-full text-sm font-bold transition-colors duration-300 cursor-pointer text-gray-400 hover:text-white"
+              className="relative px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 cursor-pointer text-gray-400 hover:text-white active:scale-95 transform"
             >
               {activeFilter === filter.id && (
                 <motion.div
@@ -101,11 +101,12 @@ export const PortfolioGrid: React.FC<PortfolioGridProps> = ({ onProjectSelect })
               initial="hidden"
               animate="show"
               exit="exit"
+              whileTap={{ scale: 0.97, borderColor: "rgba(0, 240, 255, 0.4)" }}
               onClick={() => onProjectSelect(project)}
               className="group cursor-pointer rounded-2xl overflow-hidden bg-[#121212] border border-white/5 hover:border-electricCyan/40 hover:shadow-neonCyan transition-all duration-300 flex flex-col"
             >
               {/* Media Container com Hover Glow e Proporção Original Adaptativa */}
-              <div className="relative overflow-hidden h-[300px] w-full bg-black/60 flex items-center justify-center border-b border-white/5">
+              <div className="relative overflow-hidden h-[220px] sm:h-[260px] md:h-[300px] w-full bg-black/60 flex items-center justify-center border-b border-white/5">
                 {project.heroImage.endsWith('.mp4') ? (
                   <video
                     src={project.heroImage}

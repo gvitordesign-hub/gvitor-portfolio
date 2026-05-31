@@ -3,7 +3,7 @@ import { Phone, MessageSquare, Send } from 'lucide-react';
 
 export const Contact: React.FC = () => {
   const whatsappMessage = encodeURIComponent("Olá, gostaria de um orçamento");
-  const whatsappUrl = `https://wa.me/5577999225120?text=${whatsappMessage}`;
+  const whatsappUrl = `https://wa.me/5577998645665?text=${whatsappMessage}`;
 
   return (
     <section id="contact" className="py-24 px-6 max-w-4xl mx-auto border-t border-white/5">
@@ -35,13 +35,13 @@ export const Contact: React.FC = () => {
 
           <div className="flex flex-wrap items-center justify-center gap-8 pt-6 border-t border-white/5 w-full">
             <a
-              href="https://wa.me/5577999225120"
+              href="https://wa.me/5577998645665"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-gray-400 hover:text-electricCyan duration-300 transition-colors"
             >
               <Phone className="w-4 h-4 text-electricCyan" />
-              <span className="text-sm font-medium">+55 (77) 99922-5120</span>
+              <span className="text-sm font-medium">+55 (77) 99864-5665</span>
             </a>
             <a
               href="https://instagram.com/gvitordesign"
