@@ -4,7 +4,7 @@ rules_version = '2';
 // - Qualquer visitante pode LER os projetos (o site é público).
 // - Somente a conta do dono pode CRIAR, EDITAR ou APAGAR.
 //
-// ANTES DE PUBLICAR: troque SEU_UID_AQUI pelo UID da sua conta
+// ANTES DE PUBLICAR: troque Xo3seegFtUNMlIeDjJshtFGJCJh2 pelo UID da sua conta
 // (Firebase Console → Authentication → Users → coluna "UID de usuário").
 service cloud.firestore {
   match /databases/{database}/documents {

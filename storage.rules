@@ -4,12 +4,12 @@ rules_version = '2';
 // - Leitura pública (as mídias aparecem no site).
 // - Envio/remoção somente pela conta do dono, com limite de tamanho e tipo de arquivo.
 //
-// ANTES DE PUBLICAR: troque SEU_UID_AQUI pelo mesmo UID usado em firestore.rules.
+// ANTES DE PUBLICAR: troque Xo3seegFtUNMlIeDjJshtFGJCJh2 pelo mesmo UID usado em firestore.rules.
 service firebase.storage {
   match /b/{bucket}/o {
 
     function isOwner() {
-      return request.auth != null && request.auth.uid == Xo3seegFtUNMlIeDjJshtFGJCJh2';
+      return request.auth != null && request.auth.uid == 'Xo3seegFtUNMlIeDjJshtFGJCJh2';
     }
 
     match /portfolio/{allPaths=**} {
