@@ -134,10 +134,10 @@ export const projectsData: Project[] = [
     year: '2025',
     challenge: 'Desenvolver a identidade visual de campanha e materiais promocionais dinâmicos para a divulgação do grande festival "Fest Verão Guanambi", focando em conversão e engajamento nas vendas de ingressos.',
     solution: 'Criação de cartazes de alta energia, line-up estético e motions de contagem regressiva e liberação de lotes de ingressos, com paleta de cores vibrantes e contrastantes.',
-    heroImage: '/portfolio/fest-verao-guanambi/FEST-VERÃO-GUANAMBI-2021-2---CARD-VENDASLIBERADAS.png',
+    heroImage: '/portfolio/fest-verao-guanambi/FEST-VERÃO-GUANAMBI-2021-2-CARDOFICIAL3.png',
     media: [
-      { type: 'video', url: '/portfolio/fest-verao-guanambi/FEST VERÃO GUANAMBI 2021-2 - MOTION_1.mp4', thumbnail: '/portfolio/fest-verao-guanambi/FEST-VERÃO-GUANAMBI-2021-2---CARD-VENDASLIBERADAS.png', caption: 'Motion Promocional Oficial - Fest Verão Guanambi' },
-      { type: 'image', url: '/portfolio/fest-verao-guanambi/FEST-VERÃO-GUANAMBI-2021-2---CARD-VENDASLIBERADAS.png', caption: 'Vendas Liberadas - Cartaz Oficial' },
+      { type: 'video', url: '/portfolio/fest-verao-guanambi/FEST VERÃO GUANAMBI 2021-2 - MOTION_1.mp4', thumbnail: '/portfolio/fest-verao-guanambi/FEST-VERÃO-GUANAMBI-2021-2-CARDOFICIAL3.png', caption: 'Motion Promocional Oficial - Fest Verão Guanambi' },
+      { type: 'image', url: '/portfolio/fest-verao-guanambi/FEST-VERÃO-GUANAMBI-2021-2-CARDOFICIAL3.png', caption: 'Card Oficial 3 - Fest Verão Guanambi' },
       { type: 'image', url: '/portfolio/fest-verao-guanambi/LINE UP.png', caption: 'Line Up Oficial do Evento' },
       { type: 'image', url: '/portfolio/fest-verao-guanambi/FEST VERÃO GUANAMBI 2021-2 - CAMAROTE PREMIUM.png', caption: 'Divulgação Camarote Premium' },
       { type: 'image', url: '/portfolio/fest-verao-guanambi/VIRADA DE LOTE 10 DEZ.png', caption: 'Alerta Virada de Lote' },

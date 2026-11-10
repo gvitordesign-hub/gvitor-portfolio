@@ -9,71 +9,106 @@ interface AdminPanelProps {
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToPortfolio }) => {
-  const { isAdmin, loginAdmin, logoutAdmin } = useProjects();
+  const { isAdmin, adminEmail, authReady, authAvailable, loginAdmin, logoutAdmin } = useProjects();
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = loginAdmin(password);
-    if (success) {
-      setError(false);
+    if (submitting) return;
+    setSubmitting(true);
+    setError('');
+    const result = await loginAdmin(email, password);
+    setSubmitting(false);
+    if (result.ok) {
       setPassword('');
     } else {
-      setError(true);
+      setError(result.message);
     }
   };
 
+  // Aguarda o Firebase restaurar a sessão salva, para não piscar a tela de login.
+  if (!authReady) {
+    return <section className="min-h-screen bg-[#0B0B0B]" aria-busy="true" aria-label="Carregando" />;
+  }
+
   if (!isAdmin) {
+    const inputClass =
+      'w-full bg-[#161616] border border-white/10 focus:border-magneticViolet rounded-xl px-4 py-3.5 text-white outline-none text-sm transition-all duration-300 disabled:opacity-50';
     return (
       <section className="min-h-screen flex items-center justify-center px-6 relative py-12 bg-[#0B0B0B]">
-        {/* Glow neon de fundo */}
         <div className="absolute w-80 h-80 bg-magneticViolet/10 rounded-full blur-[100px] pointer-events-none" />
-        
+
         <div className="w-full max-w-md p-8 rounded-3xl bg-white/[0.01] border border-white/5 shadow-neonGlow flex flex-col gap-6 text-center z-10">
           <div className="mx-auto w-14 h-14 bg-magneticViolet/10 text-magneticViolet border border-magneticViolet/20 rounded-2xl flex items-center justify-center shadow-neonViolet">
-            <Lock className="w-6 h-6" />
-          </div>
-          
-          <div>
-            <h2 className="font-title text-3xl font-extrabold text-white">Acesso Restrito</h2>
-            <p className="text-xs text-gray-500 mt-2">
-              Digite a chave mestre do painel super admin para gerenciar o portfólio.
-            </p>
+            <Lock className="w-6 h-6" aria-hidden="true" />
           </div>
 
+          <div>
+            <h2 className="font-title text-3xl font-extrabold text-white">Acesso Restrito</h2>
+            <p className="text-xs text-gray-400 mt-2">Entre com seu e-mail e senha para gerenciar o portfólio.</p>
+          </div>
+
+          {!authAvailable && (
+            <div role="alert" className="p-3.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs font-semibold">
+              O Firebase não está configurado neste ambiente (preencha as variáveis VITE_FIREBASE_* no .env). O login está indisponível.
+            </div>
+          )}
+
           {error && (
-            <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-semibold flex items-center justify-center gap-2">
-              <ShieldAlert className="w-4 h-4" /> Senha mestre inválida!
+            <div role="alert" className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center gap-2">
+              <ShieldAlert className="w-4 h-4 shrink-0" aria-hidden="true" /> {error}
             </div>
           )}
 
           <form onSubmit={handleLoginSubmit} className="flex flex-col gap-4 text-left">
             <div>
-              <label className="text-xs uppercase font-extrabold text-gray-400 block mb-2">Chave de Acesso</label>
+              <label htmlFor="admin-email" className="text-xs uppercase font-extrabold text-gray-400 block mb-2">
+                E-mail
+              </label>
               <input
-                type="password"
+                id="admin-email"
+                type="email"
                 required
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                className="w-full bg-[#161616] border border-white/5 focus:border-magneticViolet rounded-xl px-4 py-3.5 text-white outline-none text-sm transition-all duration-300"
+                autoComplete="username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={submitting || !authAvailable}
+                className={inputClass}
               />
             </div>
-            
+            <div>
+              <label htmlFor="admin-password" className="text-xs uppercase font-extrabold text-gray-400 block mb-2">
+                Senha
+              </label>
+              <input
+                id="admin-password"
+                type="password"
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={submitting || !authAvailable}
+                className={inputClass}
+              />
+            </div>
+
             <button
               type="submit"
-              className="w-full py-4 rounded-xl bg-magneticViolet text-white font-extrabold hover:shadow-neonViolet transition-all duration-300 cursor-pointer"
+              disabled={submitting || !authAvailable}
+              className="w-full py-4 rounded-xl bg-magneticViolet text-white font-extrabold hover:shadow-neonViolet transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Autenticar Painel
+              {submitting ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
 
           <button
             onClick={onBackToPortfolio}
-            className="text-xs font-bold text-gray-500 hover:text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+            className="text-xs font-bold text-gray-400 hover:text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-2"
           >
-            <ArrowLeft className="w-3.5 h-3.5" /> Voltar ao Portfólio
+            <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" /> Voltar ao Portfólio
           </button>
         </div>
       </section>
@@ -87,6 +122,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToPortfolio }) => 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
           <div>
             <span className="text-xs uppercase tracking-widest text-magneticViolet font-bold">PAINEL DE GERENCIAMENTO</span>
+            {adminEmail && <span className="block text-xs text-gray-400 mt-1">Conectado como {adminEmail}</span>}
             <h1 className="font-title text-3xl md:text-5xl font-extrabold text-white mt-1">Super Admin Portfólio</h1>
           </div>
           

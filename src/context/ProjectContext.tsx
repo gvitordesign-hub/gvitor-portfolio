@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { db, isFirebaseConfigured } from '../config/firebase';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { db, auth, isFirebaseConfigured } from '../config/firebase';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import type { User } from 'firebase/auth';
 import { 
   collection, 
   addDoc, 
@@ -19,17 +21,47 @@ export interface ProjectContextType {
   addProject: (project: Omit<Project, 'id'>) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   reorderProjects: (startIndex: number, endIndex: number) => Promise<void>;
+  /** true quando há um usuário autenticado no Firebase Auth. As regras do Firestore/Storage é que autorizam as escritas. */
   isAdmin: boolean;
-  loginAdmin: (password: string) => boolean;
-  logoutAdmin: () => void;
+  adminEmail: string | null;
+  /** false enquanto o Firebase ainda restaura a sessão salva (evita piscar a tela de login). */
+  authReady: boolean;
+  /** false quando o .env do Firebase não está preenchido (login indisponível). */
+  authAvailable: boolean;
+  loginAdmin: (email: string, password: string) => Promise<LoginResult>;
+  logoutAdmin: () => Promise<void>;
 }
+
+export type LoginResult = { ok: true } | { ok: false; message: string };
+
+const loginErrorMessage = (code: string): string => {
+  switch (code) {
+    case 'auth/invalid-credential':
+    case 'auth/wrong-password':
+    case 'auth/user-not-found':
+    case 'auth/invalid-email':
+      return 'E-mail ou senha incorretos.';
+    case 'auth/too-many-requests':
+      return 'Muitas tentativas. Aguarde alguns minutos e tente de novo.';
+    case 'auth/network-request-failed':
+      return 'Sem conexão com o servidor. Verifique sua internet.';
+    case 'auth/operation-not-allowed':
+      return 'Login por e-mail/senha não está ativado no Firebase (Authentication → Sign-in method).';
+    default:
+      return 'Não foi possível entrar. Tente novamente.';
+  }
+};
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState<boolean>(() => !auth);
+  const [needsSeed, setNeedsSeed] = useState<boolean>(false);
+  const seededRef = useRef(false);
+  const isAdmin = !!user;
 
   useEffect(() => {
     if (!isFirebaseConfigured()) {
@@ -49,23 +81,12 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
 
       if (list.length === 0) {
-        // Se a coleção estiver vazia, semeia os dados de fallback estáticos automaticamente
-        console.log("Coleção Firestore vazia. Semeando dados estáticos iniciais...");
-        fallbackProjects.forEach(async (proj, idx) => {
-          await addDoc(collection(db!, 'projects'), {
-            title: proj.title,
-            client: proj.client,
-            year: proj.year,
-            category: proj.category,
-            challenge: proj.challenge,
-            solution: proj.solution,
-            heroImage: proj.heroImage,
-            media: proj.media,
-            sort_order: idx
-          });
-        });
+        // Coleção vazia: visitantes veem os projetos estáticos; o admin logado os grava no Firestore (ver efeito abaixo).
+        setProjects(fallbackProjects);
+        setNeedsSeed(true);
       } else {
         setProjects(list);
+        setNeedsSeed(false);
       }
       setLoading(false);
     }, (error) => {
@@ -77,12 +98,39 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return () => unsubscribe();
   }, []);
 
+  // Sessão do administrador (Firebase Auth restaura o login salvo automaticamente).
   useEffect(() => {
-    const session = localStorage.getItem('gvitor_admin_session');
-    if (session === 'true') {
-      setIsAdmin(true);
-    }
+    if (!auth) return;
+    return onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setAuthReady(true);
+    });
   }, []);
+
+  // Semeia o Firestore com os projetos estáticos uma única vez, somente por um admin autenticado
+  // (visitantes não têm permissão de escrita).
+  useEffect(() => {
+    if (!isAdmin || !needsSeed || seededRef.current || !db) return;
+    seededRef.current = true;
+    (async () => {
+      for (const [idx, proj] of fallbackProjects.entries()) {
+        await addDoc(collection(db!, 'projects'), {
+          title: proj.title,
+          client: proj.client,
+          year: proj.year,
+          category: proj.category,
+          challenge: proj.challenge,
+          solution: proj.solution,
+          heroImage: proj.heroImage,
+          media: proj.media,
+          sort_order: idx,
+        });
+      }
+    })().catch((err) => {
+      seededRef.current = false;
+      console.error('Falha ao semear o Firestore:', err);
+    });
+  }, [isAdmin, needsSeed]);
 
   const addProject = async (newProj: Omit<Project, 'id'>) => {
     if (!isFirebaseConfigured()) {
@@ -145,18 +193,19 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const loginAdmin = (password: string): boolean => {
-    if (password === 'admin123') {
-      setIsAdmin(true);
-      localStorage.setItem('gvitor_admin_session', 'true');
-      return true;
+  const loginAdmin = async (email: string, password: string): Promise<LoginResult> => {
+    if (!auth) return { ok: false, message: 'Firebase não está configurado neste ambiente.' };
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      return { ok: true };
+    } catch (err) {
+      const code = (err as { code?: string }).code ?? '';
+      return { ok: false, message: loginErrorMessage(code) };
     }
-    return false;
   };
 
-  const logoutAdmin = () => {
-    setIsAdmin(false);
-    localStorage.removeItem('gvitor_admin_session');
+  const logoutAdmin = async () => {
+    if (auth) await signOut(auth);
   };
 
   return (
@@ -167,6 +216,9 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       deleteProject,
       reorderProjects,
       isAdmin,
+      adminEmail: user?.email ?? null,
+      authReady,
+      authAvailable: !!auth,
       loginAdmin,
       logoutAdmin
     }}>

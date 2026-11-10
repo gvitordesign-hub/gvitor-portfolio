@@ -1,0 +1,343 @@
+/* ==========================================================================
+   ESTÚDIO — portfólio interativo (cursor, rastro, mesa arrastável, índice…)
+   Tudo aqui é decorativo/progressivo: sem JS ou com "menos movimento" o
+   conteúdo continua legível e navegável.
+   ========================================================================== */
+
+/* ── Textura de grão sobre todo o site ── */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  pointer-events: none;
+  opacity: 0.09;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* ── Tipografia ── */
+/* Texto vazado. A fonte é variável e seus contornos se sobrepõem (ex.: o "A"); com o traço
+   desenhado primeiro e preenchido por cima na cor do fundo, só a metade externa do traço
+   aparece e os artefatos internos somem. */
+.text-outline {
+  color: var(--fill, #0b0b0b);
+  -webkit-text-stroke: 3px var(--stroke, #ffffff);
+  paint-order: stroke fill;
+}
+.mono-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* Linhas do título entram "subindo" de uma máscara */
+.line-mask {
+  display: block;
+  overflow: hidden;
+  padding: 0.12em 0 0.06em;
+  margin: -0.12em 0 -0.06em;
+}
+.line-mask > span {
+  display: block;
+  transform: translateY(110%);
+  animation: line-up 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: var(--d, 0s);
+}
+@keyframes line-up {
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Letras do título reagem à passagem do mouse */
+.hl {
+  display: inline-block;
+  transition: color 0.35s ease, -webkit-text-stroke-color 0.35s ease, transform 0.35s ease;
+}
+@media (hover: hover) {
+  .hl:hover {
+    color: var(--color-electricCyan);
+    -webkit-text-stroke-color: transparent;
+    transform: translateY(-0.04em);
+  }
+}
+
+/* Revelar ao rolar */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.9s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition-delay: var(--d, 0s);
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+.reveal-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.5em);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition-delay: var(--d, 0s);
+}
+.is-in .reveal-word {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── Hero: rastro de capas que seguem o mouse ── */
+.trail-item {
+  position: absolute;
+  width: clamp(120px, 14vw, 210px);
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  translate: -50% -50%;
+  border-radius: 3px;
+  pointer-events: none;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+  animation: trail-pop 1.5s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+@keyframes trail-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.55) rotate(var(--rot, 0deg));
+  }
+  16% {
+    opacity: 1;
+    transform: scale(1) rotate(var(--rot, 0deg));
+  }
+  68% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.12) rotate(var(--rot, 0deg));
+  }
+}
+
+/* ── Faixa com texto rolando ── */
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-x 38s linear infinite;
+}
+.marquee-pause:hover .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee-x {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/* ── Cursor customizado (só aparece sobre elementos [data-cursor]) ── */
+html.cursor-on [data-cursor] {
+  cursor: none;
+}
+.cursor-ring {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+.cursor-ring__bg {
+  position: absolute;
+  left: -48px;
+  top: -48px;
+  width: 96px;
+  height: 96px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--color-electricCyan);
+  color: #000;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transform: scale(0);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.25s ease;
+}
+.cursor-ring[data-state='label'] .cursor-ring__bg {
+  transform: scale(1);
+}
+.cursor-ring[data-state='dot'] .cursor-ring__bg {
+  transform: scale(0.14);
+}
+.cursor-ring[data-pressed='true'][data-state='label'] .cursor-ring__bg {
+  transform: scale(0.82);
+}
+
+/* ── Carrossel (fileiras de cartões grandes) ── */
+.row-scroller {
+  scroll-behavior: auto;
+  overscroll-behavior-x: contain;
+}
+.row-scroller[data-grabbing='true'] {
+  cursor: grabbing;
+}
+/* Durante o arrasto com o mouse, os cartões não reagem (sem hover nem clique acidental) */
+.row-scroller[data-dragging='true'] .pcard {
+  pointer-events: none;
+}
+@media (pointer: coarse) {
+  .row-scroller {
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 1.25rem;
+  }
+}
+.pcard {
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease, opacity 0.35s ease, filter 0.35s ease;
+  user-select: none;
+}
+.pcard:focus-visible {
+  outline: 2px solid var(--color-electricCyan);
+  outline-offset: 4px;
+}
+/* Com mouse: o cartão cresce e revela os detalhes; os demais esmaecem. */
+@media (hover: hover) and (pointer: fine) {
+  .prow:has(.pcard:hover) .pcard:not(:hover) {
+    opacity: 0.5;
+    filter: grayscale(0.7);
+  }
+  .pcard:hover,
+  .pcard:focus-visible {
+    transform: scale(1.06);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(0, 240, 255, 0.55);
+  }
+  .pcard__more {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .pcard:hover .pcard__more,
+  .pcard:focus-visible .pcard__more {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Visualizador imersivo do projeto ── */
+.viewer-root {
+  /* Altura máxima da peça principal: no celular ~58% da tela; no desktop, a tela menos barra, contador e miniaturas */
+  --stage-h: 58svh;
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+  overscroll-behavior: contain;
+}
+@media (min-width: 1024px) {
+  .viewer-root {
+    --stage-h: calc(100svh - 18rem);
+  }
+}
+.viewer-backdrop {
+  animation: viewer-fade 0.5s ease both;
+  transition: opacity 0.6s ease;
+}
+.viewer-ambient {
+  animation: viewer-fade 1.2s ease both;
+}
+.viewer-content,
+.viewer-chrome {
+  animation: viewer-fade 0.6s 0.25s ease both;
+}
+@keyframes viewer-fade {
+  from {
+    opacity: 0;
+  }
+}
+.viewer-rise {
+  animation: viewer-rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: var(--d, 0s);
+}
+@keyframes viewer-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+/* Ao fechar: o conteúdo some e o cartaz volta ao cartão de origem */
+.viewer-root[data-closing='true'] .viewer-backdrop,
+.viewer-root[data-closing='true'] .viewer-ambient {
+  opacity: 0 !important;
+}
+.viewer-root[data-closing='true'] .viewer-content,
+.viewer-root[data-closing='true'] .viewer-chrome {
+  opacity: 0;
+  animation: none;
+  transition: opacity 0.3s ease;
+}
+/* Troca de peça: só opacidade (qualquer transform alteraria a posição medida na animação de abertura) */
+.stage-swap {
+  animation: viewer-fade 0.5s ease both;
+}
+
+/* ── Índice (lista) ── */
+.index-list:has(.index-row:hover) .index-row:not(:hover) {
+  opacity: 0.3;
+}
+.index-row {
+  transition: opacity 0.3s ease;
+}
+.index-preview {
+  display: none;
+}
+.index-thumb {
+  display: block;
+}
+@media (hover: hover) and (pointer: fine) {
+  .index-preview {
+    display: block;
+  }
+  .index-thumb {
+    display: none;
+  }
+}
+
+/* ── Foto com "lupa" colorida (Sobre) ── */
+.lens-top {
+  clip-path: circle(var(--r, 0px) at var(--lx, 50%) var(--ly, 50%));
+  transition: clip-path 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.lens:hover .lens-top {
+  --r: 130px;
+}
+@media (hover: none) {
+  .lens-top {
+    clip-path: none;
+  }
+}
+
+/* ── Acordeão de serviços ── */
+.acc-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.acc-panel[data-open='true'] {
+  grid-template-rows: 1fr;
+}
+
+/* ── Botão magnético ── */
+.magnetic-inner {
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ── Menos movimento ── */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none !important;
+  }
+  .trail-item {
+    display: none;
+  }
+}

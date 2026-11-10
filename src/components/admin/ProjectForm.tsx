@@ -182,7 +182,7 @@ export const ProjectForm: React.FC = () => {
 
     } catch (err) {
       console.error("Falha ao publicar case no Firebase:", err);
-      alert("Erro ao publicar projeto. Certifique-se de ter configurado as regras do Firestore e do Storage para permitir leitura/escrita anônima no modo teste.");
+      alert("Erro ao publicar projeto. Verifique se você está logado e se as regras do Firestore e do Storage foram publicadas (veja docs/ADMIN-FIREBASE.md).");
     } finally {
       setUploading(false);
       setUploadStatus('');

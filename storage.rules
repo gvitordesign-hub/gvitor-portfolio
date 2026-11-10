@@ -1,0 +1,28 @@
+rules_version = '2';
+
+// Regras do Firebase Storage (imagens e vídeos do portfólio).
+// - Leitura pública (as mídias aparecem no site).
+// - Envio/remoção somente pela conta do dono, com limite de tamanho e tipo de arquivo.
+//
+// ANTES DE PUBLICAR: troque SEU_UID_AQUI pelo mesmo UID usado em firestore.rules.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isOwner() {
+      return request.auth != null && request.auth.uid == Xo3seegFtUNMlIeDjJshtFGJCJh2';
+    }
+
+    match /portfolio/{allPaths=**} {
+      allow read: if true;
+      allow delete: if isOwner();
+      allow create, update: if isOwner()
+        && request.resource.size < 200 * 1024 * 1024
+        && (request.resource.contentType.matches('image/.*')
+            || request.resource.contentType.matches('video/.*'));
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
